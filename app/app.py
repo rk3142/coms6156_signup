@@ -31,8 +31,10 @@ def create_app():
     db.init_app(app)
     CORS(app)
 
-    from api import api as api_blueprint
-    app.register_blueprint(api_blueprint, url_prefix='/reg-service/v1/')
+    from api import api as api_bp
+    from api import health as health_bp
+    app.register_blueprint(api_bp, url_prefix='/reg-service/v1/')
+    app.register_blueprint(health_bp, url_prefix='/health')
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
