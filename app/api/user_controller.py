@@ -4,7 +4,7 @@ from sqlalchemy.sql.functions import user
 from models.address import Address
 from . import api
 from models.users import User
-from app import app, db
+from app import db
 from error import bad_request, unauthorized, resouce_already_exists, internal_server_error, resource_not_found
 from datetime import datetime
 

@@ -3,10 +3,10 @@ from operator import add
 from sqlalchemy import Column, Enum, Integer, String, TIMESTAMP, Date, Text, text
 from sqlalchemy.sql.functions import user
 from exceptions import ValidationError
-from app import db
 from flask import current_app, request, url_for
 from datetime import datetime
 from sqlalchemy.orm import relationship
+from . import db
 
 class User(db.Model):
     __tablename__ = 'users'

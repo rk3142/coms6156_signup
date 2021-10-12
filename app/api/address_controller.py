@@ -4,7 +4,7 @@ from flask import jsonify, request, url_for, current_app, json, Response
 from . import api
 from models.address import Address
 from models.users import User
-from app import app, db
+from app import db
 from error import bad_request, unauthorized, forbidden, resouce_already_exists, internal_server_error, resource_not_found
 
 

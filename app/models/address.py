@@ -1,8 +1,8 @@
 # coding: utf-8
 from sqlalchemy import Column, Date, Enum, ForeignKey, Integer, String, TIMESTAMP, Text, text
 from sqlalchemy.dialects.mysql import TINYINT
-from app import db
 from flask import current_app, json, request, url_for
+from . import db
 
 
 class Address(db.Model):
