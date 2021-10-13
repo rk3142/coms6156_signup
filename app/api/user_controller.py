@@ -86,7 +86,7 @@ def get_user_details(id):
         current_app.logger.exception("Exception occured while processing function: get_user_details")
         return internal_server_error("Internal server error")
 
-@api.route('/user/<int:id>/update_password', methods=['POST','PUT'])
+@api.route('/user/<int:id>/update_password', methods=['POST',	'PUT'])
 def update_password(id):
     try:
         user = User.query.get_or_404(id)
@@ -105,7 +105,7 @@ def update_password(id):
         current_app.logger.exception("Exception occured while processing function: update_password")
         return internal_server_error("Internal server error")
 
-@api.route('/user/<int:id>', methods=['DELETE'])
+@api.route('/users/<int:id>', methods=['DELETE'])
 def deactivate_profile(id):
     try:
         user = User.query.get_or_404(id)
@@ -128,7 +128,7 @@ def update_user_by_id(id):
     current_app.logger.info(f'Proceeding to update record of user with id={id}')
     try:
         if request.data:
-            request_json = request.data
+            request_json = request.get_json()
             user_db = User.query.get_or_404(id)
             user_db.first_name = request_json.get('first_name')
             user_db.last_name = request_json.get('last_name')
@@ -139,7 +139,7 @@ def update_user_by_id(id):
             db.session.commit()
             user_resp = User.query.get_or_404(user_db.id)
             return jsonify(user_db.to_json()), 201, \
-            {'Location': url_for('api.get_address_by_id', id=user_db.id)}
+            {'Location': url_for('api.get_user_details', id=user_resp.id)}
         else:
             return bad_request(message='Invalid request format')
     except Exception:
@@ -160,4 +160,31 @@ def get_address_by_user(id):
             return resource_not_found("No user exists for address")
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_users_by_address")
+        return internal_server_error("Internal server error")
+
+@api.route('/users', methods = ['POST'])
+def create_new_user_with_address():
+    current_app.logger.info('Processing request to create new user')
+    try:
+        if request.data:
+            address_id = request.get_json().get('address_id')
+            user = User.from_json(request.get_json(force=True), address_id=address_id)
+            if not User.check_account_already_exists(user.email):
+                if User.check_username_exists(user.username):
+                    db.session.add(user)
+                    db.session.commit()
+                    user = User.query.get_or_404(user.id)
+                    return jsonify(user.to_json()), 201, \
+                    {'Location': url_for('api.get_user_details', id=user.id)}
+                else:
+                    current_app.logger.warn("username already exists")
+                    return resouce_already_exists("username already exists")
+            else:
+                current_app.logger.warn("Email already exists")
+                return resouce_already_exists("Email already exists")
+        else:
+            return bad_request(message='Invalid request format')
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Exception occured while processing function: create_new_users")
         return internal_server_error("Internal server error")

@@ -25,12 +25,14 @@ def add_new_address():
         if request.data:
             address = Address.from_json(request.get_json(force=True))
             db.session.add(address)
+            db.session.commit()
             ''''
             user = User.from_json(request.get_json(force=True), address_id=address.id)
             db.session.add(user)
             db.session.commit()
             '''
-            return jsonify(Address.to_json()), 201, \
+            address = Address.query.get_or_404(address.id)
+            return jsonify(address.to_json()), 201, \
             {'Location': url_for('api.get_address_by_id', id=address.id)}
         else:
             return bad_request(message='Invalid request format')
