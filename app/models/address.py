@@ -3,10 +3,21 @@ from sqlalchemy import Column, Date, Enum, ForeignKey, Integer, String, TIMESTAM
 from sqlalchemy.dialects.mysql import TINYINT
 from flask import current_app, json, request, url_for
 from . import db
+from dataclasses import dataclass
 
-
+@dataclass
 class Address(db.Model):
     __tablename__ = 'address'
+
+    id: int
+    house_number: String
+    street_name_1: String
+    street_name_2: String
+    city: String
+    region: String
+    country_code: String
+    postal_code: String
+    
 
     id = Column(Integer, primary_key=True)
     house_number = Column(String(16))
@@ -20,7 +31,7 @@ class Address(db.Model):
     updated_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
     users = db.relationship('User', backref='address', lazy=True)
 
-    def to_json(self):
+    def to_json_old(self):
         json_user = {
             'id': self.id,
             'house_number': self.house_number,
@@ -33,10 +44,26 @@ class Address(db.Model):
             'links': self.get_links_arr()
         }
         return json_user
+    
+    @staticmethod
+    def to_json(result):
+        json_address = result
+        return json_address
+
+    @staticmethod
+    def custom_query(query):
+        result_set = db.session.execute(query)
+        result_list = []
+        if result_set is not None:
+            for row in result_set:
+                result_list.append(dict(row))
+        
+        return result_list
+
 
     @staticmethod
     def list_to_json(address_list):
-        return [ item.to_json() for item in address_list]
+        return [ Address.to_json(item) for item in address_list]
         
     def get_links_arr(self):
         links_list = []
@@ -50,8 +77,6 @@ class Address(db.Model):
             user_json['rel'] = 'user'
             user_json['href'] = url_for('api.get_user_details', id = user.id)
             links_list.append(user_json)
-        
-        print(links_list)
         return links_list
 
 

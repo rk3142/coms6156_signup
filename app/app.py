@@ -6,6 +6,7 @@ import logging, sys
 from models import db
 from api import user_controller, health_controller, address_controller
 
+
 def get_db_uri(username, password, host, port, datbase_name):
     return 'mysql+pymysql://' + username + ':' + password + '@' + host + ':' + port + '/' + datbase_name
 
@@ -24,6 +25,14 @@ def create_app():
     load_db_connection(app)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['PREFERRED_URL_SCHEME'] = 'https'
+    app.config['IS_DEVELOPMENT_MODE'] = os.environ.get("IS_APP_ON_DEVELOPMENT")
+    app.config['SS_API_KEY'] = os.getenv("SS_API_KEY" , None)
+    app.config['SS_AUTH_TOKEN'] = os.getenv("SS_AUTH_TOKEN", None)
+    app.config['GOOGLE_OAUTH_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID')
+    app.config['GOOGLE_OAUTH_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET')
+    app.secret_key = "some secret"
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
     # app.config['PASSWORD_HASH'] = os.environ.get("PASSWORD_HASH")
     # app.config['REGSALT'] = os.environ.get("REGSALT")
     db.init_app(app)
@@ -31,6 +40,9 @@ def create_app():
 
     from api import api as api_bp
     from api import health as health_bp
+    from api import google_bp as google_bp
+    
+    app.register_blueprint(google_bp, url_prefix="/reg-service/v1/auth")
     app.register_blueprint(api_bp, url_prefix='/reg-service/v1/')
     app.register_blueprint(health_bp, url_prefix='/')
     handler = logging.StreamHandler(sys.stdout)
@@ -44,4 +56,4 @@ def create_app():
 application = create_app()
 
 if __name__ == '__main__':
-    application.run(host='0.0.0.0', port=8000)
+    application.run(host='0.0.0.0', port=5000)

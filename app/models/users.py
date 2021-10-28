@@ -7,9 +7,21 @@ from flask import current_app, request, url_for
 from datetime import datetime
 from sqlalchemy.orm import relationship
 from . import db
+from dataclasses import dataclass
 
+@dataclass
 class User(db.Model):
     __tablename__ = 'users'
+
+    id: int
+    first_name: String
+    last_name: String
+    username: String
+    email: String
+    gender: String
+    dob: Date
+    bio: String
+    address_id: int
 
     id = Column(Integer, primary_key=True)
     first_name = Column(String(128))
@@ -59,7 +71,9 @@ class User(db.Model):
             'gender': self.gender,
             'dob': self.dob,
             'bio': self.bio,
-            'address_id': self.address_id
+            'address_id': self.address_id,
+        'first_name': self.first_name,
+        'last_name': self.last_name
         }
         return json_user
 

@@ -1,5 +1,5 @@
 import re
-from flask import jsonify, request, url_for, current_app, Response
+from flask import jsonify, request, redirect, url_for, current_app, Response, render_template, session
 from sqlalchemy.sql.functions import user
 from models.address import Address
 from . import api
@@ -7,6 +7,48 @@ from models.users import User
 from app import db
 from error import bad_request, unauthorized, resouce_already_exists, internal_server_error, resource_not_found
 from datetime import datetime
+from . import google_bp
+from flask_dance.contrib.google import google
+import json
+import config.constants as CONSTANTS
+
+@google_bp.route('/register', methods=['POST', 'GET'])
+def register():
+    google_data = None
+    user_info_endpoint = '/oauth2/v2/userinfo'
+    if google.authorized:
+        google_data = google.get(user_info_endpoint).json()
+        email_address = google_data.get('email')
+        [uni, domain] = email_address.split('@')
+        print(email_address)
+        if domain != CONSTANTS.DOMAIN_NAME:
+            return unauthorized("This application is only for Columbia Affiliates")
+
+        already_exists = User.check_account_already_exists(email_address)
+        if already_exists:
+            return resouce_already_exists("You are already registered with us")
+        
+
+        bp = current_app.blueprints.get("google")
+        session = bp.session
+        # token = session.token
+
+        user_obj = User(id = google_data.get('id'),
+                        first_name = google_data.get('given_name'),
+                        last_name = google_data.get('family_name'),
+                        username = uni,
+                        email = email_address,
+                        address_id = 2,
+                        status = 1)
+
+        db.session.add(user_obj)
+        db.session.commit()
+
+        return jsonify(user_obj.to_json()), 201, \
+                    {'Location': url_for('api.get_user_details', id=user_obj.id)}
+        return jsonify(google_data)
+    else:
+        return redirect(url_for("google.login"))
 
 
 @api.route('/addresses/<int:id>/users', methods = ['POST'])
@@ -38,7 +80,7 @@ def create_new_users(id):
 @api.route('/users', methods = ['GET'])
 def get_all_users():
     current_app.logger.info('Processing request to get all users')
-    try:
+    try:       
         users = User.query.all()
         return jsonify(users = User.list_to_json(users))
     except Exception:
@@ -114,7 +156,7 @@ def deactivate_profile(id):
             user.status = 0
             db.session.add(user)
             db.session.commit()
-            status_code = Response(status=200)
+            status_code = Response(status=204)
             return status_code
         else:
             return unauthorized("Invalid password provided")

@@ -1,10 +1,12 @@
 from operator import add
-import re
+import re, json
 from flask import jsonify, request, url_for, current_app, json, Response
 from . import api
 from models.address import Address
 from models.users import User
 from app import db
+from utils.smarty_streets import AddressValidator
+from utils.query_creator import QueryCreator
 from error import bad_request, unauthorized, forbidden, resouce_already_exists, internal_server_error, resource_not_found
 
 
@@ -12,7 +14,15 @@ from error import bad_request, unauthorized, forbidden, resouce_already_exists, 
 def get_all_addresses():
     current_app.logger.info('Processing request to get all address')
     try:
-        addresses = Address.query.all()
+        request_args = request.args.to_dict()
+        print(request_args)
+        if not request_args:
+            addresses = Address.query.all()
+        else:
+            #addresses = Address.query.with_entities(Address.city).filter_by(postal_code='100023').limit(1).offset(0)
+            query_string = QueryCreator.get_sql_query('address', request_args)
+            addresses = Address.custom_query(query_string)
+            print(addresses)
         return jsonify(addresses = Address.list_to_json(addresses))
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_all_addresses")
@@ -34,6 +44,23 @@ def add_new_address():
             address = Address.query.get_or_404(address.id)
             return jsonify(address.to_json()), 201, \
             {'Location': url_for('api.get_address_by_id', id=address.id)}
+        else:
+            return bad_request(message='Invalid request format')
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Exception occured while processing function: add_new_address")
+        return internal_server_error("Internal server error")
+
+@api.route('/validate_address', methods = ['GET'])
+def validate_input_address():
+    current_app.logger.info('Proceeding to validate address using smarty streets API')
+    try:
+        if request.data:
+            ss_response = AddressValidator.validate_street_details(request.get_json())
+            if ss_response is not None:
+                    return jsonify(json.loads(ss_response)), 200
+            else:
+                return bad_request(message='Invalid request format')
         else:
             return bad_request(message='Invalid request format')
     except Exception:
@@ -84,7 +111,7 @@ def delete_address_by_id(id):
     try:
         Address.query.filter_by(id=id).delete()
         db.session.commit()
-        status_code = Response(status=200)
+        status_code = Response(status=204)
         return status_code
     except Exception:
         db.session.rollback()
