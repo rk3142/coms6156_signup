@@ -10,6 +10,7 @@ from datetime import datetime
 from . import google_bp
 from flask_dance.contrib.google import google
 import json
+from utils.query_creator import QueryCreator
 import config.constants as CONSTANTS
 
 @google_bp.route('/register', methods=['POST', 'GET'])
@@ -81,7 +82,15 @@ def create_new_users(id):
 def get_all_users():
     current_app.logger.info('Processing request to get all users')
     try:       
-        users = User.query.all()
+        request_args = request.args.to_dict()
+        if not request_args:
+            users = []
+            for user in User.query.all():
+                users.append(QueryCreator.row2dict(user))
+        else:
+            query_string = QueryCreator.get_sql_query('users', request_args)
+            users = Address.custom_query(query_string)
+
         return jsonify(users = User.list_to_json(users))
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_all_users")
@@ -122,7 +131,13 @@ def login_user():
 def get_user_details(id):
     current_app.logger.info('Proceeding to process get_user_details for user {id}')
     try:
-        user = User.query.get_or_404(id)
+        request_args = request.args.to_dict()
+        if not request_args:
+            user = User.query.get_or_404(id)
+        else:
+            query_string = QueryCreator.get_sql_query('users', request_args)
+            user = Address.custom_query(query_string)
+        
         return jsonify(user.to_json())
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_user_details")

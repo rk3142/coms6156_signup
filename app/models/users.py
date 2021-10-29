@@ -61,6 +61,22 @@ class User(db.Model):
         user_record = User.query.filter((User.email==email) | (User.username==username)).first()
         return user_record.id if hasattr(user_record, 'id') else None
 
+    @staticmethod
+    def custom_query(query):
+        result_set = db.session.execute(query)
+        result_list = []
+        if result_set is not None:
+            for row in result_set:
+                result_list.append(dict(row))
+        
+        return result_list
+
+    @staticmethod
+    def to_json(result):
+        json_user = result
+        json_user['links'] = User.get_links_arr(result)
+        return json_user
+
     def to_json(self):
         json_user = {
             'links': self.get_links_arr(),
@@ -77,15 +93,16 @@ class User(db.Model):
         }
         return json_user
 
-    def get_links_arr(self):
+    @staticmethod
+    def get_links_arr(users):
         links_list = []
         user_json = {}
         user_json['rel'] = 'self'
-        user_json['href'] = url_for('api.get_user_details', id=self.id)
+        user_json['href'] = url_for('api.get_user_details', id=users['id'])
         links_list.append(user_json)
         address_json = {}
         address_json['rel'] = 'address'
-        address_json['href'] = url_for('api.get_address_by_id', id=self.address_id)
+        address_json['href'] = url_for('api.get_address_by_id', id=users['address_id'])
         links_list.append(address_json)
         return links_list
 

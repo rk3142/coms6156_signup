@@ -15,14 +15,14 @@ def get_all_addresses():
     current_app.logger.info('Processing request to get all address')
     try:
         request_args = request.args.to_dict()
-        print(request_args)
         if not request_args:
-            addresses = Address.query.all()
+            addresses = []
+            for address in Address.query.all():
+                addresses.append(QueryCreator.row2dict(address))
         else:
-            #addresses = Address.query.with_entities(Address.city).filter_by(postal_code='100023').limit(1).offset(0)
             query_string = QueryCreator.get_sql_query('address', request_args)
             addresses = Address.custom_query(query_string)
-            print(addresses)
+
         return jsonify(addresses = Address.list_to_json(addresses))
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_all_addresses")
@@ -72,8 +72,15 @@ def validate_input_address():
 def get_address_by_id(id):
     current_app.logger.info(f'Processing request to details of address with id={id}')
     try:
-        address = Address.query.get_or_404(id)
-        return jsonify(address.to_json())
+        request_args = request.args.to_dict()
+        if not request_args:
+            addresses = Address.query.get_or_404(id)
+        else:
+            request_args['id'] = id
+            query_string = QueryCreator.get_sql_query('address', request_args)
+            addresses = Address.custom_query(query_string)
+
+        return jsonify(addresses.to_json())
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_address_by_id")
         return internal_server_error("Internal server error")
@@ -122,7 +129,14 @@ def delete_address_by_id(id):
 def get_users_by_address(id):
     current_app.logger.info("Proceeding to get the list of users by address")
     try:
-        users = User.query.filter_by(address_id=id)
+        request_args = request.args.to_dict()
+        if not request_args:
+            users = User.query.filter_by(address_id=id)
+        else:
+            request_args['address_id'] = id
+            query_string = QueryCreator.get_sql_query('users', request_args)
+            users = Address.custom_query(query_string)
+
         if users is not None:
             return jsonify(users = User.list_to_json(users))
         else:

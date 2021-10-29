@@ -3,16 +3,23 @@ import traceback
 import re
 
 class QueryCreator():
+
+    def row2dict(row):
+        d = {}
+        for column in row.__table__.columns:
+            d[column.name] = str(getattr(row, column.name))
+        return d
+
     def get_sql_query(resource, query_string):
         print(query_string)
         final_query = CONSTANTS.QUERY_PATTERN
         field_list = query_string.get('fields', CONSTANTS.DEFAULT_FIELD)
-        
         limit_value = query_string.get('limit', CONSTANTS.PAGE_SIZE)
         offset_value = query_string.get('offset', CONSTANTS.DEFAULT_OFFSET)
         where_text  = ''
 
-        if field_list != CONSTANTS.PAGE_SIZE:
+        if field_list != CONSTANTS.DEFAULT_FIELD:
+            field_list = 'id,' + field_list
             query_string.pop('fields')
         
         if limit_value != CONSTANTS.PAGE_SIZE:
