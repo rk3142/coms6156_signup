@@ -21,13 +21,16 @@ class QueryCreator():
         if field_list != CONSTANTS.DEFAULT_FIELD:
             field_list = 'id,' + field_list
             query_string.pop('fields')
-        
+        '''
         if limit_value != CONSTANTS.PAGE_SIZE:
             query_string.pop('limit')
 
         if offset_value != CONSTANTS.DEFAULT_OFFSET:
             query_string.pop('offset')
-        
+        '''
+
+        query_string.pop('limit')
+        query_string.pop('offset')
 
         print("After [" + str(query_string) + "]")
         if query_string != {}:

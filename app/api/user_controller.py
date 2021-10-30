@@ -17,18 +17,18 @@ import config.constants as CONSTANTS
 def register():
     google_data = None
     user_info_endpoint = '/oauth2/v2/userinfo'
+    print("Inside register function")
     if google.authorized:
+        print("register: Inside if")   
         google_data = google.get(user_info_endpoint).json()
         email_address = google_data.get('email')
         [uni, domain] = email_address.split('@')
-        print(email_address)
         if domain != CONSTANTS.DOMAIN_NAME:
             return unauthorized("This application is only for Columbia Affiliates")
 
         already_exists = User.check_account_already_exists(email_address)
         if already_exists:
             return resouce_already_exists("You are already registered with us")
-        
 
         bp = current_app.blueprints.get("google")
         session = bp.session

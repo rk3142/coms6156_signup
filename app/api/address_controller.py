@@ -18,12 +18,15 @@ def get_all_addresses():
         if not request_args:
             addresses = []
             for address in Address.query.all():
+                request_args = None
                 addresses.append(QueryCreator.row2dict(address))
         else:
+            copied_request_args = request.args.to_dict()
             query_string = QueryCreator.get_sql_query('address', request_args)
+            print(copied_request_args)
             addresses = Address.custom_query(query_string)
 
-        return jsonify(addresses = Address.list_to_json(addresses))
+        return jsonify(addresses = Address.list_to_json(addresses), links = Address.get_pagination_data(request))
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_all_addresses")
         return internal_server_error("Internal server error")
@@ -138,7 +141,7 @@ def get_users_by_address(id):
             users = Address.custom_query(query_string)
 
         if users is not None:
-            return jsonify(users = User.list_to_json(users))
+            return jsonify(users = User.list_to_json(users), links = User.get_pagination_data(request, id))
         else:
             return resource_not_found("No user exists for address")
     except Exception:

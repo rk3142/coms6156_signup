@@ -1,11 +1,13 @@
 import os
-from flask import Flask
+from flask import Flask, request, redirect, url_for
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 import logging, sys
 from models import db
 from api import user_controller, health_controller, address_controller
-
+from middleware import security
+from flask_dance.contrib.google import google
+from api import google_bp as google_bp
 
 def get_db_uri(username, password, host, port, datbase_name):
     return 'mysql+pymysql://' + username + ':' + password + '@' + host + ':' + port + '/' + datbase_name
@@ -40,7 +42,6 @@ def create_app():
 
     from api import api as api_bp
     from api import health as health_bp
-    from api import google_bp as google_bp
     
     app.register_blueprint(google_bp, url_prefix="/reg-service/v1/auth")
     app.register_blueprint(api_bp, url_prefix='/reg-service/v1/')
@@ -50,10 +51,18 @@ def create_app():
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     app.logger.addHandler(handler)
     app.logger.setLevel(logging.DEBUG)
+
+    
     return app
 
-
 application = create_app()
+
+@application.before_request
+def before_request_func():
+    print("before_request is running!")
+    result_ok = security.check_security(request, google, google_bp)
+    if not result_ok:
+        return redirect(url_for('google.login'))
 
 if __name__ == '__main__':
     application.run(host='0.0.0.0', port=5000)
