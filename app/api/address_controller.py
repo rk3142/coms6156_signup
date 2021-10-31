@@ -21,9 +21,7 @@ def get_all_addresses():
                 request_args = None
                 addresses.append(QueryCreator.row2dict(address))
         else:
-            copied_request_args = request.args.to_dict()
             query_string = QueryCreator.get_sql_query('address', request_args)
-            print(copied_request_args)
             addresses = Address.custom_query(query_string)
 
         return jsonify(addresses = Address.list_to_json(addresses), links = Address.get_pagination_data(request))
@@ -45,7 +43,8 @@ def add_new_address():
             db.session.commit()
             '''
             address = Address.query.get_or_404(address.id)
-            return jsonify(address.to_json()), 201, \
+            address_resp = address.to_dict()
+            return jsonify(Address.to_json(address_resp)), 201, \
             {'Location': url_for('api.get_address_by_id', id=address.id)}
         else:
             return bad_request(message='Invalid request format')
@@ -54,7 +53,7 @@ def add_new_address():
         current_app.logger.exception("Exception occured while processing function: add_new_address")
         return internal_server_error("Internal server error")
 
-@api.route('/validate_address', methods = ['GET'])
+@api.route('/validate_address', methods = ['GET', 'POST'])
 def validate_input_address():
     current_app.logger.info('Proceeding to validate address using smarty streets API')
     try:
@@ -105,7 +104,8 @@ def update_address_by_id(id):
             db.session.add(address_db)
             db.session.commit()
             address_resp = Address.query.get_or_404(address_db.id)
-            return jsonify(address_resp.to_json()), 201, \
+            address_data = address_resp.to_dict()
+            return jsonify(Address.to_json(address_data)), 201, \
             {'Location': url_for('api.get_address_by_id', id=address_db.id)}
         else:
             return bad_request(message='Invalid request format')

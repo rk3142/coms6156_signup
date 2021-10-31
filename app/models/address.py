@@ -68,13 +68,6 @@ class Address(db.Model):
     def list_to_json(address_list, request=None):
         address_resp = [Address.to_json(item) for item in address_list]
         return address_resp
-        request_args = request.args.to_dict()
-        if request_args is not None:
-            limit = request_args.get('limit', None)
-            offset = request_args.get('offset', None)
-            if limit is not None and offset is not None:
-                address_resp.append(Address.get_pagination_data(request))
-        
 
     @staticmethod
     def get_links_arr(address, path_parameters=None):
@@ -155,3 +148,16 @@ class Address(db.Model):
                         region = address_json.get('region'),
                         country_code = address_json.get('country_code'),
                         postal_code = address_json.get('postal_code'))
+
+    def to_dict(self):
+        json_address = {
+            'id': self.id,
+            'house_number': self.house_number,
+            'street_name_1': self.street_name_1,
+            'street_name_2': self.street_name_2,
+            'city': self.city,
+            'region': self.region,
+            'country_code': self.country_code,
+            'postal_code': self.postal_code
+        }
+        return json_address

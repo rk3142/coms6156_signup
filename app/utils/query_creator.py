@@ -28,9 +28,11 @@ class QueryCreator():
         if offset_value != CONSTANTS.DEFAULT_OFFSET:
             query_string.pop('offset')
         '''
-
-        query_string.pop('limit')
-        query_string.pop('offset')
+        if 'limit' in query_string.keys():
+            query_string.pop('limit')
+        
+        if 'offset' in query_string.keys():
+            query_string.pop('offset')
 
         print("After [" + str(query_string) + "]")
         if query_string != {}:
@@ -48,8 +50,3 @@ class QueryCreator():
         final_query = re.sub(CONSTANTS.LIMIT_IDENTIFIER, limit_value, final_query)
         final_query = re.sub(CONSTANTS.OFFSET_IDENTIFIER, offset_value, final_query)
         return final_query
-
-
-        
-
-

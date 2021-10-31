@@ -7,17 +7,15 @@ from . import google_bp
 
 @health.route('/', methods = ['GET'])
 def respond_to_aws():
-    google_data = None
-    user_info_endpoint = '/outh2/v2/userinfo'
-    if google.authorized:
-        google_data = google.get(user_info_endpoint)
+    return Response(status=200)
 
-        print(google_data)
-        print(json.dumps(google_data), indent = 2)
-        bp = google_bp.blueprints.get("google")
-        session = bp.session
-        token = session.token
 
-        print("Token [" + str(token) + "]")
-        return jsonify(google_data)
-    #return Response(status=200)
+@health.route("/site-map")
+def list_routes():
+    routes = []
+
+    print(current_app.url_map)
+    for rule in current_app.url_map.iter_rules():
+        routes.append('%s' % rule)
+
+    return jsonify(routes= routes)

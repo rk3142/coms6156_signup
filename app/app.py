@@ -60,7 +60,7 @@ application = create_app()
 @application.before_request
 def before_request_func():
     print("before_request is running!")
-    result_ok = security.check_security(request, google, google_bp)
+    result_ok = security.check_security(request, google_bp, google)
     if not result_ok:
         return redirect(url_for('google.login'))
 

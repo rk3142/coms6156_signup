@@ -12,6 +12,7 @@ from flask_dance.contrib.google import google
 import json
 from utils.query_creator import QueryCreator
 import config.constants as CONSTANTS
+from middleware.notification import NotificationMiddlewareHandler
 
 @google_bp.route('/register', methods=['POST', 'GET'])
 def register():
@@ -45,7 +46,13 @@ def register():
         db.session.add(user_obj)
         db.session.commit()
 
-        return jsonify(user_obj.to_json()), 201, \
+        user_resp = user_obj.to_dict()
+        ''''
+        NotificationMiddlewareHandler.send_sns_message(
+                                                        "arn:aws:sns:us-east-2:892513566331:app-topic",
+                                                        User.to_json(user_resp))
+        '''
+        return jsonify(User.to_json(user_resp)), 201, \
                     {'Location': url_for('api.get_user_details', id=user_obj.id)}
         return jsonify(google_data)
     else:
@@ -91,7 +98,7 @@ def get_all_users():
             query_string = QueryCreator.get_sql_query('users', request_args)
             users = Address.custom_query(query_string)
 
-        return jsonify(users = User.list_to_json(users))
+        return jsonify(users = User.list_to_json(users), links = User.get_pagination_data(request, id=None))
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_all_users")
         return internal_server_error("Internal server error")
@@ -134,11 +141,12 @@ def get_user_details(id):
         request_args = request.args.to_dict()
         if not request_args:
             user = User.query.get_or_404(id)
+            user = user.to_dict()
         else:
             query_string = QueryCreator.get_sql_query('users', request_args)
             user = Address.custom_query(query_string)
         
-        return jsonify(user.to_json())
+        return jsonify(User.to_json(user))
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_user_details")
         return internal_server_error("Internal server error")
@@ -209,9 +217,10 @@ def get_address_by_user(id):
     current_app.logger.info(f"Proceeding to get the list of address of user with id={id}")
     try:
         users = User.query.filter_by(id=id).first()
+        users = users.to_dict()
         if users is not None:
-            address = Address.query.filter_by(id = users.address_id).first()
-            print(address)
+            address = Address.query.filter_by(id = users['address_id']).first()
+            address = address.to_dict()
             return jsonify(User.to_json_address(users, address))
         else:
             return resource_not_found("No user exists for address")

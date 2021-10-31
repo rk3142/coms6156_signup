@@ -15,7 +15,7 @@ import re
 class User(db.Model):
     __tablename__ = 'users'
 
-    id: int
+    id: String
     first_name: String
     last_name: String
     username: String
@@ -25,7 +25,7 @@ class User(db.Model):
     bio: String
     address_id: int
 
-    id = Column(Integer, primary_key=True)
+    id = Column(String(32), primary_key=True)
     first_name = Column(String(128))
     last_name = Column(String(128))
     username = Column(String(32))
@@ -78,19 +78,15 @@ class User(db.Model):
         json_user = result
         return json_user
 
-    def to_json_old(self):
+    def to_dict(self):
         json_user = {
-            'links': self.get_links_arr(),
             'id': self.id,
             'username': self.username,
-            'member_since': self.created_at,
-            'last_seen': self.updated_at,
             'gender': self.gender,
-            'dob': self.dob,
             'bio': self.bio,
             'address_id': self.address_id,
-        'first_name': self.first_name,
-        'last_name': self.last_name
+            'first_name': self.first_name,
+            'last_name': self.last_name
         }
         return json_user
 
@@ -104,21 +100,21 @@ class User(db.Model):
         address_json = {}
         address_json['rel'] = 'address'
         address_json['href'] = url_for('api.get_address_by_id', id=users['address_id'])
-        links_list.append(address_json, path_parameters)
+        links_list.append(address_json)
         return links_list
 
     @staticmethod
-    def to_json_address(self, address):
+    def to_json_address(user, address):
         json_user = {
-            'id': address.id,
-            'house_number': address.house_number,
-            'street_name_1': address.street_name_1,
-            'street_name_2': address.street_name_2,
-            'city': address.city,
-            'region': address.region,
-            'country_code': address.country_code,
-            'postal_code': address.postal_code,
-            'links': self.get_links_arr()
+            'id': address['id'],
+            'house_number': address['house_number'],
+            'street_name_1': address['street_name_1'],
+            'street_name_2': address['street_name_2'],
+            'city': address['city'],
+            'region': address['region'],
+            'country_code': address['country_code'],
+            'postal_code': address['postal_code'],
+            'links': User.get_links_arr(user)
         }
         return json_user
 
