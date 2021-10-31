@@ -18,9 +18,7 @@ from middleware.notification import NotificationMiddlewareHandler
 def register():
     google_data = None
     user_info_endpoint = '/oauth2/v2/userinfo'
-    print("Inside register function")
     if google.authorized:
-        print("register: Inside if")   
         google_data = google.get(user_info_endpoint).json()
         email_address = google_data.get('email')
         [uni, domain] = email_address.split('@')
@@ -88,7 +86,7 @@ def create_new_users(id):
 @api.route('/users', methods = ['GET'])
 def get_all_users():
     current_app.logger.info('Processing request to get all users')
-    try:       
+    try:
         request_args = request.args.to_dict()
         if not request_args:
             users = []
@@ -140,12 +138,15 @@ def get_user_details(id):
     try:
         request_args = request.args.to_dict()
         if not request_args:
-            user = User.query.get_or_404(id)
+            user = User.query.get(id)
+            if not user:
+                return Response(status=404)
             user = user.to_dict()
         else:
+            request_args['id'] = id
             query_string = QueryCreator.get_sql_query('users', request_args)
             user = Address.custom_query(query_string)
-        
+
         return jsonify(User.to_json(user))
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_user_details")

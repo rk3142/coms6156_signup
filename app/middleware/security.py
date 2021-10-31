@@ -8,9 +8,9 @@ secure_paths = [
         "method": ["GET", "POST"]
     },
     {
-        "endpoint": "/reg-service/v1/users",
+        "endpoint": "/reg-service/v1/users1",
         "allowed": "all",
-        "method": ["GET"]
+        "method": ["PUT"]
     },
     {
         "endpoint": "/reg-service/v1/addresses/<id>/users",
@@ -44,6 +44,8 @@ secure_paths = [
     }
 ]
 
+
+secure_paths = []
 def check_security(request, blueprint, google):
     path = request.path
     result_ok = False
@@ -52,16 +54,7 @@ def check_security(request, blueprint, google):
         user_info_endpoint = '/outh2/v2/userinfo'
         if google.authorized:
             result_ok = True
-            '''
-            print("Inside if")
-            resp = blueprint.session.get(user_info_endpoint)
-            user_info = resp.json()
-            user_id = str(user_info['id'])
-            print("User id:" + str(user_id))
-            result_ok = True
-            '''
         else:
-            print("Inside false")
             result_ok = False
     else:
         result_ok = True
@@ -69,7 +62,6 @@ def check_security(request, blueprint, google):
     return result_ok
 
 def check_path_validity(path, method_type=''):
-    print(secure_paths)
     if secure_paths is not None:
         for elements in secure_paths:
             if elements['endpoint'] == path:

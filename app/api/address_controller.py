@@ -76,7 +76,9 @@ def get_address_by_id(id):
     try:
         request_args = request.args.to_dict()
         if not request_args:
-            addresses = Address.query.get_or_404(id)
+            addresses = Address.query.get(id)
+            if not addresses:
+                return Response(status=404)
         else:
             request_args['id'] = id
             query_string = QueryCreator.get_sql_query('address', request_args)

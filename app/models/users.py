@@ -76,6 +76,7 @@ class User(db.Model):
     @staticmethod
     def to_json(result):
         json_user = result
+        json_user['links'] = User.get_links_arr(json_user)
         return json_user
 
     def to_dict(self):
