@@ -1,7 +1,14 @@
 import requests
 import json
 import boto3
+import os
 
+
+notification_path = [{
+        "endpoint": "/reg-service/v1/addresses",
+        "allowed": "all",
+        "method": ["GET", "POST"]
+    }]
 
 def format_message(text_message, event_type, resource_info):
 
@@ -45,7 +52,9 @@ class NotificationMiddlewareHandler:
 
         if NotificationMiddlewareHandler.sns_client is None:
             NotificationMiddlewareHandler.sns_client = sns = boto3.client("sns",
-                   region_name="us-east-2")
+                   region_name="us-east-2",
+           aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+           aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'))
         return NotificationMiddlewareHandler.sns_client
 
     @classmethod
@@ -56,16 +65,21 @@ class NotificationMiddlewareHandler:
         return topics
 
     @classmethod
-    def send_sns_message(cls, sns_topic, message):
+    def send_sns_message(cls, sns_topic, message, request):
         import json
 
-        s_client = NotificationMiddlewareHandler.get_sns_client()
-        response = s_client.publish(
-            TargetArn=sns_topic,
-            Message=json.dumps({'default': json.dumps(message)}),
-            MessageStructure='json'
-        )
-        print("Publish response = ", json.dumps(response, indent=2))
+        if notification_path is not None:
+            for elements in notification_path:
+                if elements['endpoint'] == request.path:
+                    s_client = NotificationMiddlewareHandler.get_sns_client()
+                    response = s_client.publish(
+                        TargetArn=sns_topic,
+                        Message=json.dumps({'default': json.dumps(message)}),
+                        MessageStructure='json'
+                    )
+                    print("Publish response = ", json.dumps(response, indent=2))
+                    return
+        return
 
     '''
     @staticmethod

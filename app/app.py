@@ -1,4 +1,4 @@
-import os
+import os, json
 from flask import Flask, request, redirect, url_for
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
@@ -6,6 +6,7 @@ import logging, sys
 from models import db
 from api import user_controller, health_controller, address_controller
 from middleware import security
+from middleware.notification import NotificationMiddlewareHandler
 from flask_dance.contrib.google import google
 from api import google_bp as google_bp
 
@@ -59,10 +60,19 @@ application = create_app()
 
 @application.before_request
 def before_request_func():
-    print("before_request is running!")
     result_ok = security.check_security(request, google_bp, google)
     if not result_ok:
         return redirect(url_for('google.login'))
+
+
+@application.after_request
+def after_request_func(response):
+    sns = NotificationMiddlewareHandler.get_sns_client()
+    tps = NotificationMiddlewareHandler.get_sns_topics()
+    NotificationMiddlewareHandler.send_sns_message(
+        "arn:aws:sns:us-east-2:892513566331:app-topic",
+        response.get_data().decode("utf-8"), request)
+    return response
 
 if __name__ == '__main__':
     application.run(host='0.0.0.0', port=5000)
