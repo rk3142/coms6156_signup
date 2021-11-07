@@ -145,7 +145,7 @@ def get_user_details(id):
         else:
             request_args['id'] = id
             query_string = QueryCreator.get_sql_query('users', request_args)
-            user = Address.custom_query(query_string)
+            user = Address.custom_query(query_string)[0]
 
         return jsonify(User.to_json(user))
     except Exception:

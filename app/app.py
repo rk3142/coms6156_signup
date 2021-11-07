@@ -64,7 +64,7 @@ def before_request_func():
     if not result_ok:
         return redirect(url_for('google.login'))
 
-
+'''
 @application.after_request
 def after_request_func(response):
     sns = NotificationMiddlewareHandler.get_sns_client()
@@ -73,6 +73,6 @@ def after_request_func(response):
         "arn:aws:sns:us-east-2:892513566331:app-topic",
         response.get_data().decode("utf-8"), request)
     return response
-
+'''
 if __name__ == '__main__':
     application.run(host='0.0.0.0', port=5000)

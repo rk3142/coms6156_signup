@@ -79,12 +79,13 @@ def get_address_by_id(id):
             addresses = Address.query.get(id)
             if not addresses:
                 return Response(status=404)
+            
+            addresses = addresses.to_dict()
         else:
             request_args['id'] = id
             query_string = QueryCreator.get_sql_query('address', request_args)
-            addresses = Address.custom_query(query_string)
-
-        return jsonify(addresses.to_json())
+            addresses = Address.custom_query(query_string)[0]
+        return jsonify(addresses = Address.to_json(addresses))
     except Exception:
         current_app.logger.exception("Exception occured while processing function: get_address_by_id")
         return internal_server_error("Internal server error")
