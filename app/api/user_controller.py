@@ -27,34 +27,34 @@ def register():
 
         already_exists = User.check_account_already_exists(email_address)
         if already_exists:
-            return resouce_already_exists("You are already registered with us")
+            user_obj = User.query.get_or_404(already_exists.id)
+        else:
+            bp = current_app.blueprints.get("google")
+            session = bp.session
+            # token = session.token
 
-        bp = current_app.blueprints.get("google")
-        session = bp.session
-        # token = session.token
+            user_obj = User(id = google_data.get('id'),
+                            first_name = google_data.get('given_name'),
+                            last_name = google_data.get('family_name'),
+                            username = uni,
+                            email = email_address,
+                            address_id = 2,
+                            status = 1)
 
-        user_obj = User(id = google_data.get('id'),
-                        first_name = google_data.get('given_name'),
-                        last_name = google_data.get('family_name'),
-                        username = uni,
-                        email = email_address,
-                        address_id = 2,
-                        status = 1)
+            db.session.add(user_obj)
+            db.session.commit()
 
-        db.session.add(user_obj)
-        db.session.commit()
-
+        
         user_resp = user_obj.to_dict()
         ''''
         NotificationMiddlewareHandler.send_sns_message(
                                                         "arn:aws:sns:us-east-2:892513566331:app-topic",
                                                         User.to_json(user_resp))
         '''
-        return jsonify(User.to_json(user_resp)), 201, \
+        return jsonify(user = User.to_json(user_resp), redirect_url = ""), 201, \
                     {'Location': url_for('api.get_user_details', id=user_obj.id)}
-        return jsonify(google_data)
     else:
-        return redirect(url_for("google.login"))
+        return jsonify(user="", redirect_url = url_for('google.login')), 302
 
 
 @api.route('/addresses/<int:id>/users', methods = ['POST'])

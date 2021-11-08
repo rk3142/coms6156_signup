@@ -1,5 +1,5 @@
 import os, json
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 import logging, sys
@@ -62,7 +62,7 @@ application = create_app()
 def before_request_func():
     result_ok = security.check_security(request, google_bp, google)
     if not result_ok:
-        return redirect(url_for('google.login'))
+        return jsonify(redirect_url = url_for('google.login'))
 
 '''
 @application.after_request
