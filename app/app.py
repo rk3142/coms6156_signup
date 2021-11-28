@@ -60,19 +60,22 @@ application = create_app()
 
 @application.before_request
 def before_request_func():
-    result_ok = security.check_security(request, google_bp, google)
+    result_ok = security.check_security(request, google)
     if not result_ok:
-        return jsonify(redirect_url = url_for('google.login'))
+        return jsonify(redirect_url = url_for('google.login')), 302
 
-'''
+
 @application.after_request
 def after_request_func(response):
-    sns = NotificationMiddlewareHandler.get_sns_client()
-    tps = NotificationMiddlewareHandler.get_sns_topics()
-    NotificationMiddlewareHandler.send_sns_message(
-        "arn:aws:sns:us-east-2:892513566331:app-topic",
-        response.get_data().decode("utf-8"), request)
+    if NotificationMiddlewareHandler.validate_notification_request(request):
+        print("Inside if")
+        sns = NotificationMiddlewareHandler.get_sns_client()
+        tps = NotificationMiddlewareHandler.get_sns_topics()
+        NotificationMiddlewareHandler.send_sns_message(
+            os.environ.get('SNS_TOPIC_NAME', None),
+            response.get_data().decode("utf-8"), request)
+    
     return response
-'''
+
 if __name__ == '__main__':
     application.run(host='0.0.0.0', port=5000)
