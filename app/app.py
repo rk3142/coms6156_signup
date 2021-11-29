@@ -67,13 +67,10 @@ def before_request_func():
 
 @application.after_request
 def after_request_func(response):
-    if NotificationMiddlewareHandler.validate_notification_request(request):
-        print("Inside if")
-        sns = NotificationMiddlewareHandler.get_sns_client()
-        tps = NotificationMiddlewareHandler.get_sns_topics()
+    notification = NotificationMiddlewareHandler.get_notification_request(request)
+    if notification is not None:
         NotificationMiddlewareHandler.send_sns_message(
-            os.environ.get('SNS_TOPIC_NAME', None),
-            response.get_data().decode("utf-8"), request)
+            os.environ.get('SNS_TOPIC_NAME', None), notification)
     
     return response
 
