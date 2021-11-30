@@ -24,6 +24,7 @@ class User(db.Model):
     dob: Date
     bio: String
     address_id: int
+    profile_pic_id: int
 
     id = Column(String(32), primary_key=True)
     first_name = Column(String(128))
@@ -35,6 +36,7 @@ class User(db.Model):
     password = Column(Text)
     bio = Column(Text)
     status = Column(Integer)
+    profile_pic_id = Column(Integer)
     created_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(TIMESTAMP, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
     address_id = Column(db.ForeignKey('address.id', ondelete='SET NULL'), index=True)
@@ -87,7 +89,8 @@ class User(db.Model):
             'bio': self.bio,
             'address_id': self.address_id,
             'first_name': self.first_name,
-            'last_name': self.last_name
+            'last_name': self.last_name,
+            'profile_pic_id': self.profile_pic_id
         }
         return json_user
 
@@ -125,16 +128,17 @@ class User(db.Model):
 
     @staticmethod
     def from_json(user_json, address_id=0):
-            return User(first_name = user_json.get('first_name'),
-                        last_name = user_json.get('last_name'),
-                        username = user_json.get('username'),
-                        email = user_json.get('email'),
-                        password = user_json.get('password'),
-                        bio = user_json.get('bio'),
-                        gender = user_json.get('gender'),
-                        status = 1,
-                        dob = datetime.strptime(user_json.get('dob'), '%Y-%m-%d'),
-                        address_id = address_id)
+        return User(first_name = user_json.get('first_name'),
+                    last_name = user_json.get('last_name'),
+                    id = user_json.get('user_id'),
+                    username = user_json.get('username'),
+                    email = user_json.get('email'),
+                    bio = user_json.get('bio'),
+                    gender = user_json.get('gender'),
+                    status = 1,
+                    dob = datetime.strptime(user_json.get('dob'), '%Y-%m-%d'),
+                    address_id = address_id,
+                    profile_pic_id= user_json.get('profile_pic_id'))
 
 
     @staticmethod
@@ -167,7 +171,6 @@ class User(db.Model):
         next_count = int(rendered_count) - int(CONSTANTS.PAGE_SIZE)
         if previous_count < 0:
             previous_count = 0
-
 
         if next_count > total_count:
             next_count = total_count

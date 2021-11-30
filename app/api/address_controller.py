@@ -5,6 +5,7 @@ from . import api
 from models.address import Address
 from models.users import User
 from app import db
+import config.constants as CONSTANTS
 from utils.smarty_streets import AddressValidator
 from utils.query_creator import QueryCreator
 from error import bad_request, unauthorized, forbidden, resouce_already_exists, internal_server_error, resource_not_found
@@ -34,14 +35,23 @@ def add_new_address():
     current_app.logger.info('Proceeding to create a new record')
     try:
         if request.data:
-            address = Address.from_json(request.get_json(force=True))
+            request_data = request.get_json()
+            
+            ss_response = AddressValidator.validate_street_details(request_data.get('address'))
+            if ss_response is not None:
+                ss_dict = json.loads(ss_response)[0]
+                print(ss_dict)
+                analysis = ss_dict.get('analysis')
+                verfication_status = analysis.get('verification_status', None)
+                if not (verfication_status is not None and verfication_status.lower() in CONSTANTS.SS_VERIFIED):
+                    return resource_not_found("Address not verfied")    
+            else:
+                return resource_not_found(message='Address not verified')
+            
+            address = Address.from_json(request_data.get('address'))
             db.session.add(address)
             db.session.commit()
-            ''''
-            user = User.from_json(request.get_json(force=True), address_id=address.id)
-            db.session.add(user)
-            db.session.commit()
-            '''
+
             address = Address.query.get_or_404(address.id)
             address_resp = address.to_dict()
             return jsonify(Address.to_json(address_resp)), 201, \
