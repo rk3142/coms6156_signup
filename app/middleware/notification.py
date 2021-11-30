@@ -50,11 +50,10 @@ class NotificationMiddlewareHandler:
 
     @classmethod
     def send_sns_message(cls, sns_topic, notification):
-        message = {"message": notification, "severity": "critical"}
         s_client = NotificationMiddlewareHandler.get_sns_client()
         response = s_client.publish(
             TargetArn=sns_topic,
-            Message=json.dumps({'default': json.dumps(message)}),
+            Message=json.dumps({'default': notification}),
             MessageStructure='json'
         )
         print("Publish response = ", json.dumps(response, indent=2))
