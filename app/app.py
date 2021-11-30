@@ -67,12 +67,12 @@ def before_request_func():
 
 @application.after_request
 def after_request_func(response):
-    notification = NotificationMiddlewareHandler.get_notification_request(request)
-    if notification is not None:
-        NotificationMiddlewareHandler.send_sns_message(
-            os.environ.get('SNS_TOPIC_NAME', None), notification)
-    
+    if response.status_code == 201:
+        notification = NotificationMiddlewareHandler.get_notification_request(request)
+        if notification is not None:
+            NotificationMiddlewareHandler.send_sns_message(
+                os.environ.get('SNS_TOPIC_NAME', None), notification)
     return response
-
+    
 if __name__ == '__main__':
     application.run(host='0.0.0.0', port=5000)
