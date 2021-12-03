@@ -36,25 +36,26 @@ def add_new_address():
     try:
         if request.data:
             request_data = request.get_json()
-            
-            ss_response = AddressValidator.validate_street_details(request_data.get('address'))
+            current_app.logger.info("The value of request_data is [" + str(request_data) + "]")
+            address_json = request_data.get('Payload').get('address')
+            '''
+            ss_response = AddressValidator.validate_street_details(address_json)
             if ss_response is not None:
                 ss_dict = json.loads(ss_response)[0]
-                print(ss_dict)
                 analysis = ss_dict.get('analysis')
                 verfication_status = analysis.get('verification_status', None)
                 if not (verfication_status is not None and verfication_status.lower() in CONSTANTS.SS_VERIFIED):
                     return resource_not_found("Address not verfied")    
             else:
                 return resource_not_found(message='Address not verified')
-            
-            address = Address.from_json(request_data.get('address'))
+            '''
+            address = Address.from_json(address_json)
             db.session.add(address)
             db.session.commit()
 
             address = Address.query.get_or_404(address.id)
             address_resp = address.to_dict()
-            return jsonify(Address.to_json(address_resp)), 201, \
+            return jsonify(address=Address.to_json(address_resp)), 201, \
             {'Location': url_for('api.get_address_by_id', id=address.id)}
         else:
             return bad_request(message='Invalid request format')

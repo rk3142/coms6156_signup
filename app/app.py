@@ -1,6 +1,7 @@
 import os, json
-from flask import Flask, request, redirect, url_for, jsonify
+from flask import Flask, request, redirect, url_for, jsonify, session
 from flask_cors import CORS
+from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 import logging, sys
 from models import db
@@ -9,6 +10,7 @@ from middleware import security
 from middleware.notification import NotificationMiddlewareHandler
 from flask_dance.contrib.google import google
 from api import google_bp as google_bp
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 def get_db_uri(username, password, host, port, datbase_name):
     return 'mysql+pymysql://' + username + ':' + password + '@' + host + ':' + port + '/' + datbase_name
@@ -25,6 +27,10 @@ def load_db_connection(app):
 
 def create_app():
     app = Flask(__name__)
+    app.wsgi_app = ProxyFix(app.wsgi_app)
+    #app.config['SESSION_COOKIE_DOMAIN'] = 'registrationservice-env.eba-tg8ich7p.us-east-2.elasticbeanstalk.com'
+    #app.config['SESSION_COOKIE_HTTPONLY'] = True
+    #app.config['SESSION_COOKIE_SECURE'] = False
     load_db_connection(app)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['PREFERRED_URL_SCHEME'] = 'https'
@@ -33,14 +39,13 @@ def create_app():
     app.config['SS_AUTH_TOKEN'] = os.getenv("SS_AUTH_TOKEN", None)
     app.config['GOOGLE_OAUTH_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID')
     app.config['GOOGLE_OAUTH_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET')
-    app.secret_key = "some secret"
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-    os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+    app.config['SECRET_KEY'] = "some secret"
+    app.config['SESSION_TYPE'] = 'filesystem'
     # app.config['PASSWORD_HASH'] = os.environ.get("PASSWORD_HASH")
     # app.config['REGSALT'] = os.environ.get("REGSALT")
     db.init_app(app)
     CORS(app)
-
+    #Session(app)
     from api import api as api_bp
     from api import health as health_bp
     

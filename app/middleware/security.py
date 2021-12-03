@@ -29,6 +29,7 @@ secure_paths = [
         "method": ["GET", "DELETE"]
     }
 ]
+secure_paths = None
 
 def check_security(request, google):
     rest_request = RESTContext(request_context=request)    
