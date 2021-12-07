@@ -75,8 +75,11 @@ def after_request_func(response):
     if response.status_code == 201:
         notification = NotificationMiddlewareHandler.get_notification_request(request)
         if notification is not None:
+            workspace_id = request.view_args['workspace_id']
+            if workspace_id is None:
+                workspace_id = request.args['workspace_id']
             NotificationMiddlewareHandler.send_sns_message(
-                os.environ.get('SNS_TOPIC_NAME', None), notification)
+                os.environ.get('SNS_TOPIC_NAME', None), notification, workspace_id)
     return response
     
 if __name__ == '__main__':
