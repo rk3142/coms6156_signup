@@ -53,7 +53,7 @@ class NotificationMiddlewareHandler:
         s_client = NotificationMiddlewareHandler.get_sns_client()
         response = s_client.publish(
             TargetArn=sns_topic,
-            Message=json.dumps({'default': {"notification": notification, "workspace_id": workspace_id}}),
+            Message=json.dumps({'default': json.dumps({"notification": notification, "workspace_id": workspace_id})}),
             MessageStructure='json'
         )
         print("Publish response = ", json.dumps(response, indent=2))
