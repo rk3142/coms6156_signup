@@ -78,7 +78,7 @@ def after_request_func(response):
             if "workspace_id" in request.view_args:
                 workspace_id = request.view_args['workspace_id']
             elif "workspace_id" in request.args:
-                workspace_id = request.args['workspace_id']
+                workspace_id = request.json['workspace_id']
             else:
                 workspace_id = None
             NotificationMiddlewareHandler.send_sns_message(
